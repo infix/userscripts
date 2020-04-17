@@ -54,20 +54,20 @@ const getImage = async id => {
   if (imageCache.has(id))
     return { cached: true, image: imageCache.get(id) }
 
-  let base64;
   const IMAGE_BASE_URL = `https://mangadex.org/images/manga/`;
-  try {
-    base64 = await downscaleImage(`${IMAGE_BASE_URL}${id}.jpg`, 60, "image/jpeg");
-  } catch (e) {
-    try {
-      base64 = await downscaleImage(`${IMAGE_BASE_URL}${id}.png`, 60, "image/png");
-    } catch (e) {
-      base64 = await downscaleImage(`${IMAGE_BASE_URL}${id}.jpeg`, 60, "image/jpeg");
-    }
-  }
+  const urls = [
+    { url: `${IMAGE_BASE_URL}${id}.jpg`, type: "image/jpeg" },
+    { url: `${IMAGE_BASE_URL}${id}.png`, type: "image/png" },
+    { url: `${IMAGE_BASE_URL}${id}.jpeg`, type: "image/jpeg" }
+  ]
 
-  imageCache.set(id, base64);
-  return { cached: false, image: base64 };
+  for (const { url, type } of urls) try {
+    const base64 = await downscaleImage(url, 60, type)
+    imageCache.set(id, base64);
+    return { cached: false, image: base64 };
+  } catch (e) {
+    console.log(`Failed to fetch ${url}.`)
+  }
 }
 
 /** @param {{mangaId: string, element: HTMLElement}} chapter */
