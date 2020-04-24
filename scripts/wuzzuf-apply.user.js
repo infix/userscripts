@@ -84,6 +84,8 @@ async function fetchDocument(jobPostingUrl) {
   wrapper.style.display = "flex";
   wrapper.style.width = "100%";
 
+  const jobseekerView = document.querySelector(".content-card.jobseeker-view")
+  const { height } = jobseekerView.getBoundingClientRect()
   aboutJob.classList.remove("content-card")
   jobRequirements.classList.remove("content-card")
 
@@ -95,7 +97,8 @@ async function fetchDocument(jobPostingUrl) {
   container.append(jobNumbers, hr, aboutJob, hr, jobRequirements)
 
   wrapper.insertBefore(container, wrapper.firstElementChild)
-
+  container.style.overflowY = "scroll"
+  container.style.maxHeight = (height + 15) + "px"
   container.style.borderTop = "4px solid #efa109"
   container.style.flex = "1"
   container.style.margin = "16px";
