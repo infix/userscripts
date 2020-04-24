@@ -23,8 +23,58 @@ async function fetchDocument(jobPostingUrl) {
   const aboutJob = doc.querySelector(".about-job.content-card")
   const jobRequirements = doc.querySelector(".job-requirements")
 
-  // TODO fix jobNumbers style
-  // const jobNumbers = doc.querySelector(".job-numbers")
+  const jobNumbers = doc.querySelector(".job-numbers")
+  const styles = document.createElement("style");
+  // language=css
+  styles.innerHTML = `
+    .job-numbers {
+      width: fit-content;
+      margin: auto auto 1em;
+    }
+
+    .applicants-all {
+      display: inline-block;
+    }
+
+    .applicants-num {
+      display: inline-block;
+      font-size: 2.8em;
+      letter-spacing: -2px;
+      line-height: 1;
+    }
+
+    .applicants-desc {
+      display: inline-block;
+      font-size: .96em;
+      font-weight: lighter;
+      line-height: 1.2;
+      margin-left: 3px;
+      text-align: left;
+    }
+
+    .applicants-stats-wrapper {
+      display: inline-block;
+      border-left: 1px solid #eee;
+      margin: 0 0 0 6px;
+      padding: 0 0 0 7px;
+    }
+
+    .applicants-stat {
+      display: inline-block;
+      margin: 0 3px;
+      text-align: center;
+    }
+
+    .applicants-stat-shortlisted {
+      color: #449d44;
+    }
+
+    .applicants-stat-rejected {
+      color: #c9302c;
+    }
+  `
+
+  document.head.appendChild(styles)
 
   document.querySelector("body > div.container").style.width = "100%";
   document.querySelector("body > div.container").style.padding = "0";
@@ -42,8 +92,7 @@ async function fetchDocument(jobPostingUrl) {
   const container = document.createElement("div")
 
   // TODO maybe switch to tabs
-  // TODO also add stats
-  container.append(/*jobNumbers, hr,*/ aboutJob, hr, jobRequirements)
+  container.append(jobNumbers, hr, aboutJob, hr, jobRequirements)
 
   wrapper.insertBefore(container, wrapper.firstElementChild)
 
