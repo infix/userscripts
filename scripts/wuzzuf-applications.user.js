@@ -68,6 +68,7 @@ const totalCount = Object.keys(applicationData).length;
 const seenCount = totalCount - countByState(applicationData, "Not seen");
 const rejectedCount = countByState(applicationData, "Rejected");
 const shortlistCount = countByState(applicationData, "Shortlisted");
+const contactsAccessedCount = countByState(applicationData, "Contacts Accessed");
 
 const styles = {
   container: { display: "flex", justifyContent: "space-evenly", flex: "1" }
@@ -78,7 +79,7 @@ const createStatsSpan = (name, count, total, color) => h("span", { style: { colo
 
 const statsContainer = h("div", { style: styles.container }, [
   createStatsSpan("Seen", seenCount, totalCount, "#3794ce"),
-  createStatsSpan("Shortlisted", shortlistCount, seenCount, "#5cb85c"),
+  createStatsSpan("Shortlisted", shortlistCount + contactsAccessedCount, seenCount, "#5cb85c"),
   createStatsSpan("Rejected", rejectedCount, seenCount, "#d9534f")
 ]);
 
