@@ -7,12 +7,12 @@
 // @author      -
 // ==/UserScript==
 
-const injectScript = (src) =>
+const injectScript = src =>
   new Promise((resolve, reject) => {
     const script = document.createElement("script");
     script.src = src;
     script.addEventListener("load", resolve);
-    script.addEventListener("error", (e) => reject(e.error));
+    script.addEventListener("error", e => reject(e.error));
     document.head.appendChild(script);
   });
 
@@ -25,8 +25,7 @@ const injectScript = (src) =>
   const { filter, mergeMap } = rxjs.operators;
   const { map, tap, delay, retryWhen, take, switchMap } = rxjs.operators;
 
-  const parseHtml = (html) =>
-    new DOMParser().parseFromString(html, "text/html");
+  const parseHtml = html => new DOMParser().parseFromString(html, "text/html");
 
   const batotoBtn = document.querySelector("#content > ul > li:nth-child(4)");
   const lastUpdated = document.createElement("li");
@@ -41,7 +40,7 @@ const injectScript = (src) =>
   });
 
   const isUpdatingBS = new BehaviorSubject(false);
-  isUpdatingBS.subscribe((value) => {
+  isUpdatingBS.subscribe(value => {
     if (value) {
       lastUpdated.innerText = "Updating...";
     } else {
@@ -54,8 +53,8 @@ const injectScript = (src) =>
   merge(of(1), imagesSub).subscribe(() => {
     const queryStr = ".chapter-container > .row.no-gutters:not(:first-child)";
     [...document.querySelectorAll(queryStr)]
-      .filter((e) => e.firstElementChild.innerText !== "")
-      .forEach((e) => {
+      .filter(e => e.firstElementChild.innerText !== "")
+      .forEach(e => {
         const mangaId = e.firstElementChild
           .querySelector("a")
           .href.replace("https://mangadex.org/title/", "")
@@ -71,8 +70,8 @@ const injectScript = (src) =>
   });
 
   const refreshKeyDown = fromEvent(document, "keydown").pipe(
-    filter((ev) => ev.key === "r" && !ev.ctrlKey),
-    tap((ev) => ev.preventDefault()),
+    filter(ev => ev.key === "r" && !ev.ctrlKey),
+    tap(ev => ev.preventDefault()),
   );
   // noinspection ES6MissingAwait
   merge(interval(5 * 60 * 1000), refreshKeyDown)
@@ -81,13 +80,13 @@ const injectScript = (src) =>
       tap(() => isUpdatingBS.next(true)),
       mergeMap(() =>
         fromFetch("https://mangadex.org/follows").pipe(
-          switchMap((response) => rxjs.from(response.text())),
-          map((text) => parseHtml(text).querySelector("#chapters")),
-          retryWhen((errors) => errors.pipe(delay(1000), take(2))),
+          switchMap(response => rxjs.from(response.text())),
+          map(text => parseHtml(text).querySelector("#chapters")),
+          retryWhen(errors => errors.pipe(delay(1000), take(2))),
         ),
       ),
     )
-    .subscribe((newChapters) => {
+    .subscribe(newChapters => {
       document.querySelector("#chapters").replaceWith(newChapters);
       isUpdatingBS.next(false);
       imagesSub.next();

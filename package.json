@@ -8,6 +8,7 @@
   },
   "prettier": {
     "tabWidth": 2,
+    "arrowParens": "avoid",
     "semi": true,
     "trailingComma": "all"
   }

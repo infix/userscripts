@@ -12,7 +12,7 @@ const getData = () => {
     ...document.querySelectorAll(
       "div.submitted-apps-container.clearfix > div > div",
     ),
-  ].map((application) => {
+  ].map(application => {
     const id = application.getAttribute("data-app-id");
     const position = application.getAttribute("data-app-title");
     const company = application.getAttribute("data-app-company");
@@ -38,7 +38,7 @@ const getData = () => {
  * @param {string} state
  */
 const countByState = (data, state) =>
-  Object.values(data).filter((datum) => datum.state === state).length;
+  Object.values(data).filter(datum => datum.state === state).length;
 
 const header = document.querySelector(".section-header.card");
 header.style.display = "flex";
@@ -66,7 +66,7 @@ function h(tagName, props, children = []) {
   }
 
   if (Array.isArray(children)) {
-    e.append(...children.filter((c) => !!c));
+    e.append(...children.filter(c => !!c));
   } else {
     e.append(children);
   }

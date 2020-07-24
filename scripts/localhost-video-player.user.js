@@ -10,12 +10,12 @@
 // @grant        none
 // ==/UserScript==
 
-const injectScript = (src) =>
+const injectScript = src =>
   new Promise((resolve, reject) => {
     const script = document.createElement("script");
     script.src = src;
     script.addEventListener("load", resolve);
-    script.addEventListener("error", (e) => reject(e.error));
+    script.addEventListener("error", e => reject(e.error));
     document.head.appendChild(script);
   });
 
@@ -75,7 +75,7 @@ const injectScript = (src) =>
   const fullScreenSub = new rxjs.BehaviorSubject(false);
   const pausedSub = new rxjs.BehaviorSubject(false);
 
-  fullScreenSub.pipe(scan((state) => !state)).subscribe((fullscreen) => {
+  fullScreenSub.pipe(scan(state => !state)).subscribe(fullscreen => {
     if (fullscreen) {
       document.exitFullscreen();
     } else {
@@ -83,7 +83,7 @@ const injectScript = (src) =>
     }
   });
 
-  pausedSub.pipe(scan((state) => !state)).subscribe((paused) => {
+  pausedSub.pipe(scan(state => !state)).subscribe(paused => {
     if (paused) video.play();
     else video.pause();
   });
@@ -94,7 +94,7 @@ const injectScript = (src) =>
   const overlaySub = new rxjs.Subject();
   overlaySub
     .pipe(
-      tap((string) => {
+      tap(string => {
         overlay.style.display = "grid";
         overlay.textContent = string;
       }),
@@ -125,18 +125,18 @@ const injectScript = (src) =>
 
   const wheelObs = rxjs
     .fromEvent(video, "wheel")
-    .pipe(tap((e) => e.preventDefault()));
+    .pipe(tap(e => e.preventDefault()));
 
-  const [wheel$, ctrlWheel$] = rxjs.partition(wheelObs, (ev) => !ev.ctrlKey);
+  const [wheel$, ctrlWheel$] = rxjs.partition(wheelObs, ev => !ev.ctrlKey);
 
   // noinspection ES6MissingAwait
   wheel$
     .pipe(
-      tap((ev) => ev.preventDefault()),
-      map((e) => (e.deltaY > 0 ? -5 : 5)),
+      tap(ev => ev.preventDefault()),
+      map(e => (e.deltaY > 0 ? -5 : 5)),
       sumClamp(0, 100, 100),
     )
-    .subscribe((val) => {
+    .subscribe(val => {
       video.volume = val / 100;
       overlaySub.next(`${val}%`);
     });
@@ -145,16 +145,16 @@ const injectScript = (src) =>
   rxjs
     .merge(
       ctrlWheel$.pipe(
-        map((e) => (e.deltaY > 0 ? -0.1 : 0.1)),
+        map(e => (e.deltaY > 0 ? -0.1 : 0.1)),
         sumClamp(0.1, 4, 1),
       ),
       rxjs.fromEvent(video, "click").pipe(
-        filter((ev) => ev.ctrlKey),
-        tap((ev) => ev.preventDefault()),
+        filter(ev => ev.ctrlKey),
+        tap(ev => ev.preventDefault()),
         mapTo(1),
       ),
     )
-    .subscribe((val) => {
+    .subscribe(val => {
       video.playbackRate = val;
       const str = val.toFixed(1);
       const rateStr = str.endsWith(".0") ? str.replace(".0", "") : str;
