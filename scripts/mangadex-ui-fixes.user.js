@@ -9,4 +9,4 @@
 // @description 1/5/2020, 5:56:12 PM
 // ==/UserScript==
 
-document.getElementById("content").style["max-width"] = "95%"
+document.getElementById("content").style["max-width"] = "95%";

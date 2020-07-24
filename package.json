@@ -2,5 +2,13 @@
   "name": "userscripts",
   "version": "1.0.0",
   "private": true,
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "prettier": "^2.0.5"
+  },
+  "prettier": {
+    "tabWidth": 2,
+    "semi": true,
+    "trailingComma": "all"
+  }
 }
