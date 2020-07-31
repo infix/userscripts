@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Follow auto update - mangadex.org
-// @namespace   Violentmonkey Scripts
 // @match       https://mangadex.org/follows
+// @match       https://mangadex.org/follows/chapters/*
 // @grant       none
 // @version     1.1
 // @author      -
@@ -19,11 +19,10 @@ const injectScript = src =>
 (async () => {
   await injectScript("https://unpkg.com/rxjs@6.6.0/bundles/rxjs.umd.min.js");
 
-  const { merge, interval, fromEvent, Subject } = rxjs;
-  const { BehaviorSubject, of } = rxjs;
+  const { merge, interval, fromEvent, Subject, from, of } = rxjs;
   const { fromFetch } = rxjs.fetch;
-  const { filter, mergeMap } = rxjs.operators;
   const { map, tap, delay, retryWhen, take, switchMap } = rxjs.operators;
+  const { filter, mergeMap } = rxjs.operators;
 
   const parseHtml = html => new DOMParser().parseFromString(html, "text/html");
 
@@ -32,14 +31,14 @@ const injectScript = src =>
   lastUpdated.style.alignSelf = "center";
   batotoBtn.after(lastUpdated);
 
-  const lastUpdateBS = new BehaviorSubject(new Date());
-  merge(interval(30 * 1000), lastUpdateBS).subscribe(() => {
-    const dateDiffInMinutes = (d1, d2) => Math.floor((d1 - d2) / 1000 / 60);
+  const lastUpdateBS = new rxjs.BehaviorSubject(new Date());
+  merge(interval(30e3), lastUpdateBS).subscribe(() => {
+    const dateDiffInMinutes = (d1, d2) => Math.floor((d1 - d2) / 60e3);
     const diff = dateDiffInMinutes(new Date(), lastUpdateBS.getValue());
     lastUpdated.innerText = `Last updated: ${diff} mins ago`;
   });
 
-  const isUpdatingBS = new BehaviorSubject(false);
+  const isUpdatingBS = new rxjs.BehaviorSubject(false);
   isUpdatingBS.subscribe(value => {
     if (value) {
       lastUpdated.innerText = "Updating...";
@@ -74,15 +73,15 @@ const injectScript = src =>
     tap(ev => ev.preventDefault()),
   );
   // noinspection ES6MissingAwait
-  merge(interval(5 * 60 * 1000), refreshKeyDown)
+  merge(interval(5 * 60e3), refreshKeyDown)
     .pipe(
       filter(() => !isUpdatingBS.getValue()),
       tap(() => isUpdatingBS.next(true)),
       mergeMap(() =>
-        fromFetch("https://mangadex.org/follows").pipe(
-          switchMap(response => rxjs.from(response.text())),
+        fromFetch(location.href).pipe(
+          switchMap(response => from(response.text())),
           map(text => parseHtml(text).querySelector("#chapters")),
-          retryWhen(errors => errors.pipe(delay(1000), take(2))),
+          retryWhen(errors => errors.pipe(delay(1e3), take(2))),
         ),
       ),
     )
