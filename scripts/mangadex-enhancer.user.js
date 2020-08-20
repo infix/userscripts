@@ -8,6 +8,8 @@
 
 document.getElementById("content").style["max-width"] = "95%";
 
+const parseHtml = html => new DOMParser().parseFromString(html, "text/html");
+
 const injectScript = src =>
   new Promise((resolve, reject) => {
     const script = document.createElement("script");
@@ -99,19 +101,48 @@ const addZoomOnHover = elem => {
 };
 
 const currentUrl = window.location.href;
-if (currentUrl.startsWith("https://mangadex.org/follows")) {
+const isFollowsPage = currentUrl.startsWith("https://mangadex.org/follows");
+if (isFollowsPage) {
   followsPage();
 }
 
-if (
+const isHomePage =
   currentUrl === "https://mangadex.org" ||
-  currentUrl === "https://mangadex.org/"
-) {
+  currentUrl === "https://mangadex.org/";
+
+if (isHomePage) {
   homePage();
 }
 
+const setAutoReload = (rxjs, isUpdatingBS) => {
+  const { merge, interval, fromEvent, from } = rxjs;
+  const { fromFetch } = rxjs.fetch;
+  const { map, tap, delay, retryWhen, take, switchMap } = rxjs.operators;
+  const { filter, mergeMap } = rxjs.operators;
+
+  const refreshKeyDown = fromEvent(document, "keydown").pipe(
+    filter(ev => ev.key === "r" && !ev.ctrlKey),
+    tap(ev => ev.preventDefault()),
+  );
+
+  return merge(interval(5 * 60e3), refreshKeyDown).pipe(
+    filter(() => !isUpdatingBS.getValue()),
+    tap(() => isUpdatingBS.next(true)),
+    mergeMap(() =>
+      fromFetch(location.href).pipe(
+        switchMap(response => from(response.text())),
+        map(text => parseHtml(text)),
+        retryWhen(errors => errors.pipe(delay(1e3), take(2))),
+      ),
+    ),
+    tap(() => isUpdatingBS.next(false)),
+  );
+};
+
 async function homePage() {
-  const thumbnails = [
+  await injectScript("https://unpkg.com/rxjs@6.6.0/bundles/rxjs.umd.min.js");
+
+  const getThumbnails = () => [
     ...document.querySelectorAll("#latest_update a > img.rounded.max-width"),
     ...document.querySelectorAll("#follows_update a > img.rounded.max-width"),
     ...document.querySelectorAll("#six_hours  a > img.rounded.max-width"),
@@ -119,18 +150,33 @@ async function homePage() {
     ...document.querySelectorAll("#week  a > img.rounded.max-width"),
   ];
 
-  thumbnails.forEach(addZoomOnHover);
+  const isUpdatingBS = new rxjs.BehaviorSubject(false);
+  isUpdatingBS.subscribe(val => {
+    console.log("updating home page", val);
+  });
+
+  setAutoReload(rxjs, isUpdatingBS).subscribe(newDoc => {
+    const selectors = [
+      "#content > div.row > div.col-lg-4 > div:nth-child(1).card.mb-3",
+      "#content > div.row > div.col-lg-8 > div.card.mb-3",
+    ];
+
+    selectors.forEach(selector => {
+      document
+        .querySelector(selector)
+        .replaceWith(newDoc.querySelector(selector));
+    });
+
+    getThumbnails().forEach(addZoomOnHover);
+  });
+
+  getThumbnails().forEach(addZoomOnHover);
 }
 
 async function followsPage() {
   await injectScript("https://unpkg.com/rxjs@6.6.0/bundles/rxjs.umd.min.js");
 
-  const { merge, interval, fromEvent, Subject, from, of } = rxjs;
-  const { fromFetch } = rxjs.fetch;
-  const { map, tap, delay, retryWhen, take, switchMap } = rxjs.operators;
-  const { filter, mergeMap } = rxjs.operators;
-
-  const parseHtml = html => new DOMParser().parseFromString(html, "text/html");
+  const { merge, interval, Subject, of } = rxjs;
 
   const batotoBtn = document.querySelector("#content > ul > li:nth-child(4)");
   const lastUpdated = document.createElement("li");
@@ -180,26 +226,10 @@ async function followsPage() {
       });
   });
 
-  const refreshKeyDown = fromEvent(document, "keydown").pipe(
-    filter(ev => ev.key === "r" && !ev.ctrlKey),
-    tap(ev => ev.preventDefault()),
-  );
-  // noinspection ES6MissingAwait
-  merge(interval(5 * 60e3), refreshKeyDown)
-    .pipe(
-      filter(() => !isUpdatingBS.getValue()),
-      tap(() => isUpdatingBS.next(true)),
-      mergeMap(() =>
-        fromFetch(location.href).pipe(
-          switchMap(response => from(response.text())),
-          map(text => parseHtml(text).querySelector("#chapters")),
-          retryWhen(errors => errors.pipe(delay(1e3), take(2))),
-        ),
-      ),
-    )
-    .subscribe(newChapters => {
-      document.querySelector("#chapters").replaceWith(newChapters);
-      isUpdatingBS.next(false);
-      imagesSub.next();
-    });
+  setAutoReload(rxjs, isUpdatingBS).subscribe(newDoc => {
+    document
+      .querySelector("#chapters")
+      .replaceWith(newDoc.querySelector("#chapters"));
+    imagesSub.next();
+  });
 }
