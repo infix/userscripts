@@ -101,17 +101,27 @@ const addZoomOnHover = elem => {
 };
 
 const currentUrl = window.location.href;
+
 const isFollowsPage = currentUrl.startsWith("https://mangadex.org/follows");
-if (isFollowsPage) {
-  followsPage();
-}
 
 const isHomePage =
   currentUrl === "https://mangadex.org" ||
   currentUrl === "https://mangadex.org/";
 
+const isChapterPage =
+  currentUrl.startsWith("https://mangadex.org/chapter/") &&
+  !currentUrl.endsWith("comments");
+
+if (isFollowsPage) {
+  followsPage();
+}
+
 if (isHomePage) {
   homePage();
+}
+
+if (isChapterPage) {
+  ChaptersPage();
 }
 
 const setAutoReload = (rxjs, isUpdatingBS) => {
@@ -232,4 +242,36 @@ async function followsPage() {
       .replaceWith(newDoc.querySelector("#chapters"));
     imagesSub.next();
   });
+}
+
+function ChaptersPage() {
+  const timeout = 100;
+  const handler = () => {
+    if (reader?.model?._isLoading) {
+      setTimeout(handler, timeout);
+    } else {
+      const container = document.querySelector(
+        "#content div.reader-controls-chapters.col-auto",
+      );
+
+      const div = document.createElement("div");
+      div.classList.add("p-2", "text-center");
+      container.after(div);
+
+      const select = container.querySelector("select");
+      const options = [...select.children];
+      const optionsEntries = options.map(({ value }, i) => [value, i]);
+      const optionsMap = new Map(optionsEntries);
+      const count = options.length;
+
+      const handleUpdate = () => {
+        const index = optionsMap.get(select.value);
+        div.innerText = `${count - index} / ${count}`;
+      };
+
+      setInterval(handleUpdate, 250);
+      handleUpdate();
+    }
+  };
+  setTimeout(handler, timeout);
 }
