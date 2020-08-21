@@ -255,22 +255,27 @@ function ChaptersPage() {
       );
 
       const div = document.createElement("div");
-      div.classList.add("p-2", "text-center");
-      container.after(div);
-
       const select = container.querySelector("select");
       const options = [...select.children];
       const optionsEntries = options.map(({ value }, i) => [value, i]);
       const optionsMap = new Map(optionsEntries);
       const count = options.length;
 
-      const handleUpdate = () => {
-        const index = optionsMap.get(select.value);
+      div.classList.add("p-2", "text-center");
+      container.after(div);
+      const handleUpdate = (index, count) => {
         div.innerText = `${count - index} / ${count}`;
       };
 
-      setInterval(handleUpdate, 250);
-      handleUpdate();
+      const res = reader?.model?._events?.chapterchange?.push({
+        once: false,
+        listener: ({ _data: { id } }) => {
+          const index = optionsMap.get(String(id));
+          handleUpdate(index, count);
+        },
+      });
+
+      handleUpdate(optionsMap.get(select.value), count);
     }
   };
   setTimeout(handler, timeout);
